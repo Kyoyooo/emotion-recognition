@@ -1,0 +1,12 @@
+torch
+transformers
+datasets
+evaluate
+optuna
+pyvi
+emoji
+scikit-learn
+pandas
+matplotlib
+seaborn
+pyyaml

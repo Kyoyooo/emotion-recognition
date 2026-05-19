@@ -1,0 +1,17 @@
+# configs/sweep_optuna.yaml
+model:
+  name: "vinai/phobert-base"
+  num_labels: 7
+  labels_list: ['Sadness', 'Surprise', 'Disgust', 'Fear', 'Anger', 'Other', 'Enjoyment']
+
+data:
+  processed_dir: "./data/processed"
+
+tuning:
+  output_dir: "./saved_models/phobert_vsmec_tuning"
+  n_trials: 10             # Số lần chạy thử nghiệm Optuna
+  train_batch_size: 32
+  eval_batch_size: 32
+  num_epochs: 5            # Số epoch tối đa cho MỖI trial
+  early_stopping_patience: 2
+  fp16: true

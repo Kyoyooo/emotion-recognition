@@ -1,0 +1,19 @@
+# configs/train.yaml
+model:
+  name: "vinai/phobert-base"
+  num_labels: 7
+  labels_list: ['Sadness', 'Surprise', 'Disgust', 'Fear', 'Anger', 'Other', 'Enjoyment']
+
+data:
+  processed_dir: "./data/processed"
+
+training:
+  output_dir: "./saved_models/phobert_vsmec_weighted"
+  final_model_dir: "./saved_models/phobert_vsmec_final"
+  learning_rate: 2.0e-5    # Sử dụng format số thực
+  train_batch_size: 32
+  eval_batch_size: 32
+  num_epochs: 10
+  weight_decay: 0.01
+  early_stopping_patience: 2
+  fp16: true
