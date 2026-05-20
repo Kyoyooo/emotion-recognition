@@ -1,52 +1,29 @@
-# scripts/train.py
 import os
 import sys
 import yaml
-import torch
-from transformers import (
-    AutoModelForSequenceClassification,
-    TrainingArguments,
-    EarlyStoppingCallback
-)
+from transformers import AutoModelForSequenceClassification, TrainingArguments, EarlyStoppingCallback
 
-# Thêm đường dẫn gốc để import từ src/
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from src.model import WeightedTrainer, compute_metrics
-from src.data_module import VSMECDataModule
-
-def load_config(config_path="configs/train.yaml"):
-    with open(config_path, "r", encoding="utf-8") as file:
-        return yaml.safe_load(file)
+from src.data_module import EmotionDataModule
 
 def main():
-    print("1. Đang tải cấu hình từ configs/train.yaml...")
-    config = load_config()
+    with open("configs/train.yaml", "r", encoding="utf-8") as file:
+        config = yaml.safe_load(file)
     
     labels_list = config['model']['labels_list']
     num_labels = config['model']['num_labels']
     id2label = {i: label for i, label in enumerate(labels_list)}
     label2id = {label: i for i, label in enumerate(labels_list)}
 
-    print("2. Đang tải Dữ liệu và tính toán Trọng số qua DataModule...")
-    # Khởi tạo DataModule giúp code gọn gàng hơn
-    data_module = VSMECDataModule(config['data']['processed_dir'], num_labels)
+    data_module = EmotionDataModule(config['data']['processed_dir'], num_labels)
     train_ds, val_ds, _ = data_module.get_datasets()
     class_weights_tensor = data_module.compute_class_weights()
-    
-    # In trọng số ra để kiểm tra
-    print(" -> Trọng số (Class Weights) đã tính toán:")
-    for i, label in id2label.items():
-        print(f"    - {label:<10} : {class_weights_tensor[i]:.4f}")
 
-    print("\n3. Khởi tạo mô hình PhoBERT-base...")
     model = AutoModelForSequenceClassification.from_pretrained(
-        config['model']['name'], 
-        num_labels=num_labels,
-        id2label=id2label,
-        label2id=label2id
+        config['model']['name'], num_labels=num_labels, id2label=id2label, label2id=label2id
     )
 
-    print("4. Thiết lập tham số huấn luyện (TrainingArguments)...")
     training_args = TrainingArguments(
         output_dir=config['training']['output_dir'],
         learning_rate=float(config['training']['learning_rate']),
@@ -63,7 +40,6 @@ def main():
         report_to="none"
     )
 
-    print("5. Khởi tạo Custom Trainer và Bắt đầu huấn luyện...")
     trainer = WeightedTrainer(
         class_weights=class_weights_tensor,
         model=model,
@@ -75,9 +51,8 @@ def main():
     )
 
     trainer.train()
-    
     trainer.save_model(config['training']['final_model_dir'])
-    print(f"\n✅ Hoàn tất! Mô hình tốt nhất đã được lưu tại: {config['training']['final_model_dir']}")
+    print(f"✅ Đã lưu model tại: {config['training']['final_model_dir']}")
 
 if __name__ == "__main__":
     main()

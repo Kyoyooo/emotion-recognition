@@ -1,19 +1,18 @@
-# configs/train.yaml
 model:
-  name: "vinai/phobert-base"
-  num_labels: 7
-  labels_list: ['Sadness', 'Surprise', 'Disgust', 'Fear', 'Anger', 'Other', 'Enjoyment']
+  name: "roberta-base"
+  num_labels: 6
+  labels_list: ['sadness', 'joy', 'love', 'anger', 'fear', 'surprise']
 
 data:
   processed_dir: "./data/processed"
 
 training:
-  output_dir: "./saved_models/phobert_vsmec_weighted"
-  final_model_dir: "./saved_models/phobert_vsmec_final"
-  learning_rate: 2.0e-5    # Sử dụng format số thực
+  output_dir: "./saved_models/roberta_emotion_weighted"
+  final_model_dir: "./saved_models/roberta_emotion_final"
+  learning_rate: 2.0e-5
   train_batch_size: 32
   eval_batch_size: 32
-  num_epochs: 10
+  num_epochs: 3          
   weight_decay: 0.01
-  early_stopping_patience: 2
+  early_stopping_patience: 1  
   fp16: true
