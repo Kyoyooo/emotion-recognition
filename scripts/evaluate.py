@@ -40,7 +40,7 @@ def main():
     pred_labels = np.argmax(logits, axis=-1)
     confidences = np.max(probs, axis=-1)
 
-    print(classification_report(true_labels, pred_labels, target_names=labels_list))
+    print(classification_report(true_labels, pred_labels, target_names=labels_list, digits=4))
 
     cm = confusion_matrix(true_labels, pred_labels)
     plt.figure(figsize=(10, 8))
