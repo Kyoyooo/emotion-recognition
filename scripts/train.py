@@ -37,7 +37,8 @@ def main():
         metric_for_best_model="f1",
         greater_is_better=True,
         fp16=config['training']['fp16'],
-        report_to="none"
+        report_to="none",
+        warmup_ratio=config['training']['warmup_ratio']
     )
 
     trainer = WeightedTrainer(
