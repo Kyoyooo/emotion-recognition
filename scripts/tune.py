@@ -2,6 +2,8 @@ import os
 import sys
 import yaml
 import optuna
+import gc          # Thư viện dọn dẹp bộ nhớ (Garbage Collector)
+import torch       # Thư viện kiểm soát GPU
 from transformers import AutoModelForSequenceClassification, TrainingArguments, EarlyStoppingCallback
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -17,11 +19,37 @@ def main():
     id2label = {i: label for i, label in enumerate(labels_list)}
     label2id = {label: i for i, label in enumerate(labels_list)}
 
+    print("1. Đang tải Dữ liệu...")
     data_module = EmotionDataModule(config['data']['processed_dir'], num_labels)
     train_ds, val_ds, _ = data_module.get_datasets()
+    
+    # Lấy trọng số nhãn dựa trên tập data gốc
     class_weights_tensor = data_module.compute_class_weights()
 
+    # ------------------------------------------------------------------
+    # TỐI ƯU 1: DATA SUBSAMPLING (TRÍCH MẪU TẬP DỮ LIỆU)
+    # Không ai dùng toàn bộ 400k mẫu chỉ để tìm siêu tham số cả.
+    # Chúng ta sẽ lấy ngẫu nhiên 10% dữ liệu Train và 30% Val để Tuning.
+    # Việc này giúp giải phóng hàng GB RAM hệ thống và tăng tốc x10 lần.
+    # ------------------------------------------------------------------
+    print("2. Đang trích xuất tập con (Subsampling) để chống tràn RAM...")
+    subset_train_size = int(len(train_ds) * 0.1) # Lấy 10%
+    subset_val_size = int(len(val_ds) * 0.3)     # Lấy 30%
+    
+    train_ds = train_ds.shuffle(seed=42).select(range(subset_train_size))
+    val_ds = val_ds.shuffle(seed=42).select(range(subset_val_size))
+    print(f"   -> Dùng {subset_train_size} mẫu Train và {subset_val_size} mẫu Val cho Tuning.")
+
     def model_init():
+        # ------------------------------------------------------------------
+        # TỐI ƯU 2: AGGRESSIVE GARBAGE COLLECTION (DỌN RÁC BỘ NHỚ)
+        # Mỗi khi Optuna bắt đầu một trial mới, ta ép Python và PyTorch 
+        # phải xóa sạch model cũ khỏi bộ nhớ GPU (VRAM).
+        # ------------------------------------------------------------------
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
         return AutoModelForSequenceClassification.from_pretrained(
             config['model']['name'], num_labels=num_labels, id2label=id2label, label2id=label2id
         )
