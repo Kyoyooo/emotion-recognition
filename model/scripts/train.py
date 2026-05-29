@@ -42,7 +42,7 @@ def main():
         report_to="none"
     )
 
-    trainer = CustomLossTrainer(
+    trainer = WeightedTrainer(
         class_weights=class_weights_tensor,
         loss_type=config['training'].get('loss_type', 'weighted_ce'),
         gamma=config['training'].get('focal_loss_gamma', 2.0),
