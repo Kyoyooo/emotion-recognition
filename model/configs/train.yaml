@@ -1,0 +1,19 @@
+model:
+  name: "roberta-base"
+  num_labels: 6
+  labels_list: ['sadness', 'joy', 'love', 'anger', 'fear', 'surprise']
+
+data:
+  processed_dir: "./data/processed"
+
+training:
+  output_dir: "./saved_models/roberta_emotion_weighted"
+  final_model_dir: "./saved_models/roberta_emotion_final"
+  learning_rate: 2.128e-5       
+  weight_decay: 0.0866        
+  warmup_ratio: 0.1265           
+  train_batch_size: 32          
+  eval_batch_size: 32
+  num_epochs: 3             
+  early_stopping_patience: 1
+  fp16: true
