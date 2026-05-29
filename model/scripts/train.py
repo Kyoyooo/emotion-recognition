@@ -27,22 +27,26 @@ def main():
     training_args = TrainingArguments(
         output_dir=config['training']['output_dir'],
         learning_rate=float(config['training']['learning_rate']),
+        weight_decay=config['training']['weight_decay'],
+        warmup_ratio=config['training']['warmup_ratio'],
         per_device_train_batch_size=config['training']['train_batch_size'],
         per_device_eval_batch_size=config['training']['eval_batch_size'],
         num_train_epochs=config['training']['num_epochs'],
-        weight_decay=config['training']['weight_decay'],
         eval_strategy="epoch",
         save_strategy="epoch",
         load_best_model_at_end=True,
         metric_for_best_model="f1",
         greater_is_better=True,
         fp16=config['training']['fp16'],
-        report_to="none",
-        warmup_ratio=config['training']['warmup_ratio']
+        lr_scheduler_type="cosine", # Tối ưu chống overfitting bằng Cosine Decay
+        report_to="none"
     )
 
-    trainer = WeightedTrainer(
+    trainer = CustomLossTrainer(
         class_weights=class_weights_tensor,
+        loss_type=config['training'].get('loss_type', 'weighted_ce'),
+        gamma=config['training'].get('focal_loss_gamma', 2.0),
+        label_smoothing=config['training'].get('label_smoothing', 0.0), # Truyền tham số vào đây
         model=model,
         args=training_args,
         train_dataset=train_ds,
