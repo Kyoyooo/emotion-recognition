@@ -11,15 +11,27 @@ from transformers import Trainer
 import evaluate
 
 class WeightedTrainer(Trainer):
-    def __init__(self, class_weights, *args, **kwargs):
+    def __init__(self, class_weights, loss_type="weighted_ce", gamma=2.0, label_smoothing=0.0, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.class_weights = class_weights
+        self.loss_type = loss_type
+        self.gamma = gamma
+        self.label_smoothing = label_smoothing # Nhận hệ số làm mịn nhãn
 
     def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
         labels = inputs.pop("labels")
         outputs = model(**inputs)
         logits = outputs.logits
-        loss_fct = nn.CrossEntropyLoss(weight=self.class_weights.to(model.device))
+        
+        if self.loss_type == "focal_loss":
+            loss_fct = FocalLoss(weight=self.class_weights.to(model.device), gamma=self.gamma)
+        else:
+            # Tích hợp native label_smoothing của PyTorch vào CrossEntropyLoss
+            loss_fct = nn.CrossEntropyLoss(
+                weight=self.class_weights.to(model.device),
+                label_smoothing=self.label_smoothing
+            )
+            
         loss = loss_fct(logits.view(-1, self.model.config.num_labels), labels.view(-1))
         return (loss, outputs) if return_outputs else loss
 
