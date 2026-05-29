@@ -9,11 +9,24 @@ data:
 training:
   output_dir: "./saved_models/roberta_emotion_weighted"
   final_model_dir: "./saved_models/roberta_emotion_final"
-  learning_rate: 2.128e-5       
-  weight_decay: 0.0866        
-  warmup_ratio: 0.1265           
-  train_batch_size: 32          
-  eval_batch_size: 32
-  num_epochs: 3             
+  learning_rate: 2.128e-5
+  weight_decay: 0.0866
+  warmup_ratio: 0.1265
+  train_batch_size: 16
+  eval_batch_size: 16
+  num_epochs: 3
   early_stopping_patience: 1
   fp16: true
+
+  # Điều hòa lại hàm phạt
+  # loss_type: Chọn "weighted_ce" (Cross-Entropy) hoặc "focal_loss"
+  loss_type: "focal_loss"
+  
+  # focal_loss_gamma: Độ tập trung phạt câu khó (Thường đặt từ 1.5 đến 2.5)
+  focal_loss_gamma: 2.0
+  
+  # smoothing_alpha: Hệ số làm dịu trọng số lớp (Từ 0.0 đến 1.0)
+  #   - alpha = 1.0: Trọng số gốc (Nghịch đảo tuyến tính - Rất gắt)
+  #   - alpha = 0.5: Trọng số căn bậc hai (Smoothed Square Root - Khuyên dùng)
+  #   - alpha = 0.0: Không dùng trọng số (Unweighted)
+  smoothing_alpha: 0.5
