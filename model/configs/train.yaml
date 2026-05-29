@@ -9,11 +9,16 @@ data:
 training:
   output_dir: "./saved_models/roberta_emotion_weighted"
   final_model_dir: "./saved_models/roberta_emotion_final"
-  learning_rate: 2.128e-5       
-  weight_decay: 0.0866        
-  warmup_ratio: 0.1265           
-  train_batch_size: 32          
+  learning_rate: 2.128e-5
+  weight_decay: 0.095          # Tăng nhẹ lên 0.095 để siết chặt chống Overfitting
+  warmup_ratio: 0.1265
+  train_batch_size: 32
   eval_batch_size: 32
-  num_epochs: 3             
+  num_epochs: 3
   early_stopping_patience: 1
   fp16: true
+
+  # Cấu hình tối ưu mới cho Giải pháp 1 & 2
+  loss_type: "weighted_ce"
+  smoothing_alpha: 0.5         # Giữ nguyên mức điều hòa trọng số lớp hình học
+  label_smoothing: 0.1         # KÍCH HOẠT: Làm mịn nhãn 10% giúp hạ hỏa độ tự tin mô hình
