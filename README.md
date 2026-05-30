@@ -60,7 +60,6 @@ repository/
     |-- requirements.txt           # Project environment dependencies
     |-- README.md                  # System documentation
 |-- emotion-recognition-app/       # Application Layer Local Setup
-\`\`\`
 ```
 
 ## Deep Learning Engineering Layer (``model/``)
