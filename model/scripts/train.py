@@ -34,12 +34,11 @@ def main():
         config['model']['name'], num_labels=num_labels, id2label=id2label, label2id=label2id
     )
 
-    print("3. Thiết lập tham số huấn luyện...")
     training_args = TrainingArguments(
         output_dir=config['training']['output_dir'],
         learning_rate=float(config['training']['learning_rate']),
         weight_decay=config['training']['weight_decay'],
-        warmup_ratio=config['training']['warmup_ratio'], # Nhận diện tham số Warmup tối ưu từ Optuna
+        warmup_ratio=config['training']['warmup_ratio'],
         per_device_train_batch_size=config['training']['train_batch_size'],
         per_device_eval_batch_size=config['training']['eval_batch_size'],
         num_train_epochs=config['training']['num_epochs'],
@@ -49,14 +48,15 @@ def main():
         metric_for_best_model="f1",
         greater_is_better=True,
         fp16=config['training']['fp16'],
+        lr_scheduler_type="cosine", # Tối ưu chống overfitting bằng Cosine Decay
         report_to="none"
     )
 
-    print(f"4. Bắt đầu huấn luyện với cấu hình Loss: {config['training'].get('loss_type', 'weighted_ce')}...")
     trainer = CustomLossTrainer(
         class_weights=class_weights_tensor,
         loss_type=config['training'].get('loss_type', 'weighted_ce'),
         gamma=config['training'].get('focal_loss_gamma', 2.0),
+        label_smoothing=config['training'].get('label_smoothing', 0.0), # Truyền tham số vào đây
         model=model,
         args=training_args,
         train_dataset=train_ds,
