@@ -154,4 +154,8 @@ Detailed Classification Report (4-Decimal Precision)
     accuracy                         0.9440     20841
    macro avg     0.8962    0.9565    0.9208     20841
 weighted avg     0.9525    0.9440    0.9458     20841
-``` 
+```
+
+Analytical InsightsThe Semantic Ceiling: 
+1. An overall accuracy of 94.40% is highly competitive, approaching the limit of human inter-annotator agreement on brief social media text.
+2. Precision vs. Recall Control: Minority classes such as love and surprise exhibit near-perfect recall ($\ge 99.8\%$), capturing almost every true positive instance. The slight drop in precision is caused by overlapping semantic context boundaries inherent to human emotion data (e.g., highly energetic joy phrases like "passionate about coding" being predicted as love, or extreme fear phrases like "completely overwhelmed" overlapping with surprise).
