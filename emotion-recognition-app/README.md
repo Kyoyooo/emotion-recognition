@@ -1,6 +1,6 @@
-# Bilingual Social Media Emotion Recognition
+# Social Media Emotion Recognition
 
-Production-oriented monorepo for Vietnamese and English social media emotion recognition. The app accepts informal text, slang, emojis, abbreviations, and noisy comments, then returns the predicted emotion, display labels, emoji, confidence, language, model metadata, and full probability distribution.
+Production-oriented monorepo for English social media emotion recognition. The app accepts informal text, slang, emojis, abbreviations, and noisy comments, then returns the predicted emotion, display labels, emoji, confidence, language, model metadata, and full probability distribution.
 
 ## Architecture
 
