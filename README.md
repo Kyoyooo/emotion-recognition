@@ -20,7 +20,7 @@ To prevent any risk of data leakage, a nested splitting algorithm partitions the
 - Validation Set (5%): $20,840$ samples — used for hyperparameter evaluation, early stopping, and boundary calibration.
 - Test Set (5%): $20,841$ samples — a completely blind partition used solely for generalized model reporting.
 
-## 2. Google Drive Caching for Large Vector Arrays
+### 2. Google Drive Caching for Large Vector Arrays
 Because the fully preprocessed and tokenized tensor structures inside ``model/data/processed/`` exceed Git file system capacities, they are hosted outside repository memory.
 - 📁 Google Drive Active Cache Directory: Download the processed splits from this [Google Drive Directory Archive](https://drive.google.com/drive/folders/14PCN39rOlkOP3gAzj_0FXcYWQjPgkvFi).
 - Setup: Extract the file content blocks directly into the ``model/data/processed/`` path prior to running training operations.
