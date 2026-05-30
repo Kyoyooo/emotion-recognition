@@ -60,7 +60,8 @@ repository/
     |   |-- run_tune.sh            
     |-- requirements.txt           # Project environment dependencies
     |-- README.md                  # System documentation
-|-- emotion-recognition-app/       # Application Layer 
+|-- emotion-recognition-app/       # Application Layer
+|-- report.pdf                     # Report 
 ```
 
 ## Deep Learning Engineering Layer (``model/``)
