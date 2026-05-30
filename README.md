@@ -1,4 +1,4 @@
-# Twitter Emotion Recognition System using Fine-Tuned RoBERTa
+# Twitter Emotion Recognition System using Transformer-based NLP model (RoBERTa)
 
 An end-to-end, production-grade Deep Learning pipeline for Text-Based Emotion Recognition on English Twitter messages. This system fine-tunes the `roberta-base` architecture on the massive **[dair-ai/emotion](https://huggingface.co/datasets/dair-ai/emotion)** dataset (~416k samples), incorporating advanced data preprocessing, memory-optimized hyperparameter optimization (Optuna), robust regularizations, and post-processing threshold calibration to overcome severe class imbalance.
 
@@ -14,7 +14,8 @@ An end-to-end, production-grade Deep Learning pipeline for Text-Based Emotion Re
 ## Dataset Specifications & Large Data Storage
 The model is trained on the comprehensive **[dair-ai/emotion](https://huggingface.co/datasets/dair-ai/emotion)** containing a total of 416,809 records under its flat unsplit configuration.
 
-### 1. Data Split ArchitectureTo prevent any risk of data leakage, a nested splitting algorithm partitions the text into three strict, deterministic splits utilizing a fixed evaluation seed:
+### 1. Data Split Architecture
+To prevent any risk of data leakage, a nested splitting algorithm partitions the text into three strict, deterministic splits utilizing a fixed evaluation seed:
 - Training Set (90%): $375,128$ samples — used for loss optimization and backpropagation.
 - Validation Set (5%): $20,840$ samples — used for hyperparameter evaluation, early stopping, and boundary calibration.
 - Test Set (5%): $20,841$ samples — a completely blind partition used solely for generalized model reporting.
