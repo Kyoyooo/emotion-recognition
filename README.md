@@ -16,9 +16,9 @@ The model is trained on the comprehensive **[dair-ai/emotion](https://huggingfac
 
 ### 1. Data Split Architecture
 To prevent any risk of data leakage, a nested splitting algorithm partitions the text into three strict, deterministic splits utilizing a fixed evaluation seed:
-- Training Set (90%): $375,128$ samples — used for loss optimization and backpropagation.
-- Validation Set (5%): $20,840$ samples — used for hyperparameter evaluation, early stopping, and boundary calibration.
-- Test Set (5%): $20,841$ samples — a completely blind partition used solely for generalized model reporting.
+- Training Set (90%): $375,128$ samples - used for loss optimization and backpropagation.
+- Validation Set (5%): $20,840$ samples - used for hyperparameter evaluation, early stopping, and boundary calibration.
+- Test Set (5%): $20,841$ samples - a completely blind partition used solely for generalized model reporting.
 
 ### 2. Google Drive Caching for Large Vector Arrays
 Because the fully preprocessed and tokenized tensor structures inside ``model/data/processed/`` exceed Git file system capacities, they are hosted outside repository memory.
