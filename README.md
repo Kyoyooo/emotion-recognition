@@ -1,148 +1,133 @@
-# Social Media Emotion Recognition System (Monorepo)
-An end-to-end, production-oriented monorepo implementing a high-performance system for Text-Based Emotion Recognition on informal English text. The system features a core Deep Learning pipeline built on a fine-tuned roberta-base transformer architecture, coupled with a robust 3-tier web application architecture designed to ingest noisy social media data, track model performance, and serve real-time or async batch predictions at scale.
+# Twitter Emotion Recognition System using Fine-Tuned RoBERTa
 
-## System Architecture
-The project is structured as a unified monorepo divided into two foundational layers: the Deep Learning Engineering Layer (model training, tuning, and local verification) and the Application Infrastructure Layer (web deployment, async workers, and databases).
+An end-to-end, production-grade Deep Learning pipeline for Text-Based Emotion Recognition on English Twitter messages. This system fine-tunes the `roberta-base` architecture on the massive **[dair-ai/emotion](https://huggingface.co/datasets/dair-ai/emotion)** dataset (~416k samples), incorporating advanced data preprocessing, memory-optimized hyperparameter optimization (Optuna), robust regularizations, and post-processing threshold calibration to overcome severe class imbalance.
 
+## Key Features
 
-```Plaintext
+- **Advanced Text Preprocessing**: Customized text cleaner engineered for social media text, supporting noise reduction, automated slang restoration (`slang_en.json`), and semantic emoji translation (`emoji_en.json`).
+- **Robust Imbalance Management**: Supports dynamic Smoothed Class Weights, Focal Loss ($\gamma=2.0$), and native Label Smoothing to prevent model overconfidence and binary probability saturation.
+- **Memory-Optimized Tuning**: Integrated Optuna hyperparameter search with automated data subsampling, gradient accumulation, and aggressive GPU memory cache clearing to safely run on resource-constrained environments (e.g., Google Colab Free).
+- **Post-Processing Threshold Calibration**: Replaces standard blind `argmax` decision boundaries with automated Validation-based optimal threshold alignment to balance precision and recall trade-offs for minority classes (`love`, `surprise`).
+- **Comprehensive MLOps Evaluation**: Automatically exports publication-ready evaluation artifacts including a high-resolution Confusion Matrix heatmap, localized Error Analysis logs (CSV), structural JSON metrics, and an executive Markdown summary report.
+- **Hugging Face Hub Integration**: Dedicated script to seamlessly upload the trained model and custom tokenizers directly to the Hugging Face Cloud Hub securely.
 
-[Client Layer] Next.js Frontend (apps/web)
-                      │
-                      ▼ (REST / Batch Requests)
-[Backend Layer] Node.js Express API Gateway (apps/api) ◄──► Redis / BullMQ Task Queue
-                      │                                            │
-                      ▼ (Internal Microservice Routing)            ▼
-[Inference Layer] FastAPI Model Registry (apps/model-api) ◄──── Async Workers
-                      │
-                      ▼
-  PostgreSQL Database (Prisma ORM Persistence)
-```
+## Dataset Specifications & Large Data Storage
+The model is trained on the comprehensive **[dair-ai/emotion](https://huggingface.co/datasets/dair-ai/emotion)** containing a total of 416,809 records under its flat unsplit configuration.
 
-### 1. Core Model Pipeline (Deep Learning Layer)
-- **Pre-trained Foundation**: Robustly Optimized BERT Approach (roberta-base) customized to map multi-class emotional profiles on social media semantics
-- **Imbalance & Optimization Techniques**: Implements dynamic Smoothed Class Weights, Focal Loss, and Cross-Entropy with Label Smoothing to counteract heavy class imbalances and prevent model overconfidence.  
-- **Post-Processing Calibration**: Evaluates validation-set outputs to compute a custom optimal threshold map. Probabilities are scaled post-inference to dramatically boost minority class precision without sacrificing recall.  
+### 1. Data Split ArchitectureTo prevent any risk of data leakage, a nested splitting algorithm partitions the text into three strict, deterministic splits utilizing a fixed evaluation seed:
+- Training Set (90%): $375,128$ samples — used for loss optimization and backpropagation.
+- Validation Set (5%): $20,840$ samples — used for hyperparameter evaluation, early stopping, and boundary calibration.
+- Test Set (5%): $20,841$ samples — a completely blind partition used solely for generalized model reporting.
 
-### 2. Microservices & Web Infrastructure (Application Layer)
-- **Online Execution**: Real-time evaluation flows sequentially:
+## 2. Google Drive Caching for Large Vector Arrays
+Because the fully preprocessed and tokenized tensor structures inside ``model/data/processed/`` exceed Git file system capacities, they are hosted outside repository memory.
+- 📁 Google Drive Active Cache Directory: Download the processed splits from this [Google Drive Directory Archive](https://drive.google.com/drive/folders/14PCN39rOlkOP3gAzj_0FXcYWQjPgkvFi).
+- Setup: Extract the file content blocks directly into the ``model/data/processed/`` path prior to running training operations.
+---
 
-$$\text{Next.js App} \rightarrow \text{Express API Gateway} \rightarrow \text{FastAPI Model Registry} \rightarrow \text{PostgreSQL}$$
+## Repository Structure
 
-- **Offline Batch Execution**: High-volume asynchronous text processing relies on a distributed task architecture:
-
-$$\text{Next.js File Upload} \rightarrow \text{Express API} \rightarrow \text{Redis / BullMQ Queue} \rightarrow \text{Background Worker} \rightarrow \text{FastAPI Inference} \rightarrow \text{PostgreSQL Storage}$$
-
-- **Design Philosophy**: Adheres to a pragmatic route-controller-service structure optimized specifically for rapid validation and microservice vertical isolation.
-
-## Project Structure
-```Plaintext
+```text
 repository/
-|-- apps/                          # Application Infrastructure Layer (Web Apps)
-|   |-- api/                       # Gateway Node.js Express API (TypeScript, Prisma)
-|   |-- model-api/                 # Microservice FastAPI Inference Service (PyTorch)
-|   |-- web/                       # Client Next.js Frontend Dashboard (Tailwind, Recharts)
-|-- configs/                       # Configuration Management Directory
-|   |-- train.yaml                 # Parameters for production model training
-|   |-- sweep_optuna.yaml          # Search space limits for Optuna tuning sweeps
-|-- data/                          # Data Management Directory
-|   |-- processed/                 # Tokenized structural DatasetDict (Hosted on Google Drive)
-|   |-- dictionaries/              # Text normalization assets
-|       |-- slang_en.json          # Dictionary for Twitter abbreviation restoration
-|       |-- emoji_en.json          # Dictionary for textual emoji translation
-|-- results/                       # Local execution output evaluation artifacts
-|   |-- confusion_matrix.png       # High-resolution performance evaluation heatmap
-|   |-- error_analysis.csv         # Fault analysis tracker sorted by model confidence
-|   |-- roberta_results.md         # Formatted text report summarizing test stats
-|   |-- roberta_results.json       # Structural metrics cache for deployment tracking
-|-- scripts/                       # Deep Learning Lifecycles (Python Execution Scripts)
-|   |-- preprocess_data.py         # Ingests, normalizes, splits, and compiles the dataset
-|   |-- train.py                   # Main supervised training loop with Early Stopping
-|   |-- tune.py                    # Hyperparameter grid search using Optuna Subsampling
-|   |-- evaluate.py                # Computes 4-decimal evaluation reports and artifact dumps
-|   |-- inference.py               # Interactive CLI terminal for localized real-time tests
-|   |-- push_to_hub.py             # Securely authenticates and deploys artifacts to HF Hub
-|-- src/                           # Shared Deep Learning pipeline source modules
-|   |-- data_module.py             # Prebuilt Dataset loader and class balance calculator
-|   |-- model.py                   # Custom CustomLossTrainer interface and Focal Loss core
-|   |-- text_cleaner.py            # Social media cleaning regex tokenizer engine
-|-- bash_scripts/                  # Standard execution shells
-|   |-- run_train.sh               
-|   |-- run_tune.sh                
-|-- docker-compose.yml             # External infrastructure orchestrator (PostgreSQL & Redis)
-|-- requirements.txt               # Global Python library dependency stack
-|-- package.json                   # Root configuration managing global npm workspaces
+|-- model/                         # Model Layer 
+    |-- configs/                   # Configuration management via YAML files
+    |   |-- train.yaml             # Hyperparameters for full model training
+    |   |-- sweep_optuna.yaml      # Search space definition for Optuna tuning
+    |-- data/                      
+    |   |-- processed/             # Tokenized and partitioned DatasetDict on disk (saved on Google Drive) 
+    |   |-- dictionaries/          # External JSON knowledge bases for text cleaning
+    |       |-- slang_en.json      # English Twitter slang and abbreviation dictionary
+    |       |-- emoji_en.json      # Emoji-to-text contextual mapping dictionary
+    |-- results/                   # Evaluation artifacts generated after testing
+    |   |-- confusion_matrix.png   # Heatmap of the model's test performance
+    |   |-- error_analysis.csv     # Misclassified samples sorted by model confidence
+    |   |-- roberta_results.md     # Executive test summary text report
+    |   |-- roberta_results.json   # Structural metrics log for downstream tracking
+    |-- scripts/                   # Linear execution pipeline scripts
+    |   |-- preprocess_data.py     # Cleans, splits (90/5/5), and tokenizes the corpus
+    |   |-- train.py               # Main model training loop with Early Stopping
+    |   |-- tune.py                # Hyperparameter optimization sweep via Optuna
+    |   |-- evaluate.py            # Computes 4-digit metric results and calibration
+    |   |-- inference.py           # Interactive real-time testing CLI environment
+    |   |-- push_to_hub.py         # Secures authentication and deploys model to HF Cloud
+    |-- src/                       # Reusable core modules
+    |   |-- data_module.py         # PyTorch dataset module & balanced weight calculator
+    |   |-- model.py               # Custom Trainer, Focal Loss, & evaluation metrics
+    |   |-- text_cleaner.py        # Custom deterministic text normalization engine
+    |-- bash_scripts/              # Automated bash execution workflows
+    |   |-- run_train.sh           
+    |   |-- run_tune.sh            
+    |-- requirements.txt           # Project environment dependencies
+    |-- README.md                  # System documentation
+|-- emotion-recognition-app/       # Application Layer Local Setup
+\`\`\`
 ```
 
-## Dataset Specifications & Data Split Map
-The core system executes deep learning iterations on the public **[dair-ai/emotion](https://huggingface.co/datasets/dair-ai/emotion)** Twitter corpus.  
+## Deep Learning Engineering Layer (``model/``)
+### 1. Deep Text Preprocessing Pipeline
+Every sentence from the raw data stream is routed through a 5-stage cleaning pipeline implemented inside ``model/src/text_cleaner.py``:
+- **Structural Noise Reduction**: Lowercases all incoming texts and applies regular expressions (Regex) to strip off text anomalies such as URL links, structural HTML tags, user ``@mentions``, and hashtags (``#``).
+- **Contextual Emoji Translation**: Uses the ``emoji_en.json`` asset map to identify and convert emoticons into equivalent plain English emotional keywords (e.g., 🥰 $\rightarrow$ *passionate/adorable*), preserving vital semantic details.
+- **Slang & Abbreviation Mapping**: Translates informal internet jargon (e.g., *im $\rightarrow$ i am, dont $\rightarrow$ do not, u $\rightarrow$ you*) via ``slang_en.json`` to restore sentences to standardized grammar before tokens hit the transformer layer.
+- **Repeated Character Contraction**: Truncates emotional character exaggerations (e.g., *loooove $\rightarrow$ love*, *happyyyyy $\rightarrow$ happy*) using string patterns to eliminate out-of-vocabulary anomalies.
+- **Byte-Pair Encoding (BPE) Tokenization**: Encodes clean strings using RoBERTa's native 50,265 token vocabulary. Special tokens (``<s>`` and ``</s>``) enclose the string, and a rigid boundaries constraint pads or truncates sequences to a uniform vector length of ``max_length = 128``.
 
-### 1. Volume & Partition Layout
-The dataset uses the flat ``unsplit`` configuration containing a total of 416,809 samples. The preprocessing script executes a nested random-seeded partitioning loop to split the data into 3 deterministic segments:  
-- Train Set (90%): $375,128$ samples. Used for updating network weights via backpropagation.  
-- Validation Set (5%): $20,840$ samples. Used for early stopping checks, regularizations, and boundary calibration.  
-- Test Set (5%): $20,841$ samples. Kept completely blind to evaluate final generalizability.
+### 2. Hyperparameter Sweeping with Optuna
+To establish highly optimized learning constraints, ``model/scripts/tune.py`` executes hyperparameter optimization loops over learning rates, weight decays, and warmup cycles.
 
-### 2. Large Data Handling Note
-Because the tokenized and vectorized representations inside the ``data/processed/`` folder exceed standard version-control storage thresholds, the compiled cache has been exported externally.
- Data Hosting Link: Download the compiled structural artifact from this [Google Drive Directory Archive](https://drive.google.com/drive/folders/14PCN39rOlkOP3gAzj_0FXcYWQjPgkvFi). Extract its internal folds directly into your local ``data/processed/`` path prior to running training scripts.
+To circumvent Out-Of-Memory (OOM) failures under hardware resource limits (e.g., Google Colab Free), the tuning framework implements memory-efficient mechanisms:
+- **Subsampling Optimization**: Isolates an informative representative subset ($10\%$ of Train, $30\%$ of Validation) to expedite trials.
+- **Gradient Accumulation**: Uses a physical ``batch_size = 8`` combined with ``gradient_accumulation_steps = 4`` to accurately simulate a large batch size of 32 while reducing VRAM footprints.
+- **Memory Management**: Interleaves PyTorch's cache eviction (``torch.cuda.empty_cache()``) and garbage collector sweeps (``gc.collect()``) inside the ``model_init`` routine.
 
-## Local Development Setup
-### 1. Start External Infrastructure
-Spin up the local containerized instances for PostgreSQL (data store) and Redis (BullMQ task engine):
+The search objective optimizes a composite function factoring in both overall stability and rare class performance:
+$$\text{Objective Value} = \text{Accuracy} + \text{Macro } F_1\text{-score}$$
 
-```Bash
-docker compose up -d
+Optuna finalized 5 separate execution sweeps (Trials 0 to 4), locking down peak performance at Trial 1 (Objective Score: 1.8482):
+- ``learning_rate``: $2.1286 \times 10^{-5}$
+- ``weight_decay``: $0.0866$ (High regularization bounding protects the Transformer weights from memorizing noisy Twitter slang)
+- ``warmup_ratio``: $0.1265$
+
+### 3. Model Training Lifecycle
+The execution of ``model/scripts/train.py`` trains the ``roberta-base`` classifier across the full $375,128$ dataset rows for 3 epochs utilizing the optimized Trial 1 hyperparameters. It incorporates a Cosine Learning Rate Scheduler and an ``EarlyStoppingCallback`` with a ``patience=1`` threshold constraint against the Validation Macro $F_1$ score to intercept overfitting immediately at the point of saturation.
+
+## Configuration Management
+The system parameters are strictly isolated within the ``configs/`` directory.
+
+``configs/train.yaml`` (Example Production Setup)
+```YAML
+model:
+  name: "roberta-base"
+  num_labels: 6
+  labels_list: ['sadness', 'joy', 'love', 'anger', 'fear', 'surprise']
+
+data:
+  processed_dir: "./data/processed"
+
+training:
+  output_dir: "./saved_models/roberta_emotion_weighted"
+  final_model_dir: "./saved_models/roberta_emotion_final"
+  learning_rate: 2.128e-5        # Optimized via Optuna Trial 1
+  weight_decay: 0.0866           # Strong regularization to combat overfitting
+  warmup_ratio: 0.1265           # Smooth gradient warmup
+  train_batch_size: 16           
+  eval_batch_size: 16
+  num_epochs: 3                  # Fast convergence on large-scale data
+  early_stopping_patience: 1
+  fp16: true                     # Mixed-precision training enabled
+  loss_type: "weighted_ce"       # Alternatives: "focal_loss"
+  smoothing_alpha: 0.5           # Square-root class weights smoothing
+  label_smoothing: 0.1           # Prevents probability overconfidence saturation
 ```
 
-### 2. Initialize and Run the Model Inference API
-```Bash
-cd apps/model-api
-python -m venv .venv
+## Experimental Results & Performance Summary
+The model yields state-of-the-art results on the blind Twitter evaluation test set ($20,841$ samples):
+- Overall Accuracy: 94.40%
+- Macro Average F1-score: 92.08%
+- Weighted Average F1-score: 94.58%
 
-# Windows activation
-.venv\Scripts\activate
-# Linux / macOS activation
-source .venv/bin/activate
 
-pip install -r requirements.txt
-uvicorn main:app --reload --port 8000
-```
-
-### 3. Initialize and Run the Backend API Gateway
-From the root workspace or target directory:
-
-```Bash
-cd apps/api
-npm install
-npm run prisma:generate
-npm run prisma:migrate
-npm run dev
-```
-
-### 4. Initialize and Run the Frontend Client Application
-```Bash
-cd apps/web
-npm install
-npm run dev
-```
-
-*Alternatively, install all Node.js workspace dependencies concurrently from the monorepo root via:*
-
-```Bash
-npm install
-```
-The client UI dashboard will be accessible at http://localhost:3000.
-
-## Experimental Metrics & Verification
-Following hyperparameter tuning using Optuna, the optimal configuration parameters were locked inside ``configs/train.yaml``:
-- ``learning_rate``: $2.1286 \times 10^{-5}$   
-- ``weight_decay``: $0.0866$   
-- ``warmup_ratio``: $0.1265$   
-
-Test Performance Report (4-Decimal Precision)
-When validated against the blind test partition ($20,841$ verification elements) , the model achieves excellent classification metrics:  
-
+Detailed Classification Report (4-Decimal Precision)
 ```Plaintext             
               precision    recall  f1-score   support
 
@@ -158,34 +143,75 @@ When validated against the blind test partition ($20,841$ verification elements)
 weighted avg     0.9525    0.9440    0.9458     20841
 ```
 
-All calculated evaluation metrics, metadata parameters, classification strings, and matrix dimensions are exported to ``results/roberta_results.json`` and ``results/roberta_results.md`` automatically upon completing script evaluation executions.
+Analytical InsightsThe Semantic Ceiling: 
+1. An overall accuracy of 94.40% is highly competitive, approaching the limit of human inter-annotator agreement on brief social media text.
+2. Precision vs. Recall Control: Minority classes such as love and surprise exhibit near-perfect recall ($\ge 99.8\%$), capturing almost every true positive instance. The slight drop in precision is caused by overlapping semantic context boundaries inherent to human emotion data (e.g., highly energetic joy phrases like "passionate about coding" being predicted as love, or extreme fear phrases like "completely overwhelmed" overlapping with surprise).
 
-## Health Checks & Verification
-Ensure your microservices are live and operating correctly by checking their endpoints:
-- **Model Inference Engine**: http://localhost:8000/health
-- **Backend API Gateway**: http://localhost:4000/health
+## Application Layer Local Setup (``emotion-recognition-app/``)
+### 1. Launch Shared Storage Infrastructure
+Initialize the docker containers holding background microservices (PostgreSQL for transaction memory and Redis for BullMQ handling):
 
-To validate system types and build performance stability across all JavaScript/TypeScript modules, run:
+```Bash
+docker compose up -d
+```
+
+### 2. Boot the Python FastAPI Inference Service
+```Bash
+cd emotion-recognition-app/apps/model-api
+python -m venv .venv
+
+# Windows OS activation
+.venv\\Scripts\\activate
+# macOS / Linux OS activation
+source .venv/bin/activate
+
+pip install -r requirements.txt
+uvicorn main:app --reload --port 8000
+```
+
+### 3. Spin up the Node.js API Gateway Core
+```Bash
+cd emotion-recognition-app/apps/api
+npm install
+npm run prisma:generate
+npm run prisma:migrate
+npm run dev
+```
+
+### 4. Deploy the Next.js Client User Interface
+```Bash
+cd emotion-recognition-app/apps/web
+npm install
+npm run dev
+``` 
+*Note: To initialize all Node.js package workspaces simultaneously from the monorepo root layer, simply use: ``npm install``.*
+
+Open and monitor the analytics frontend dashboard via: http://localhost:3000.
+
+## System Verification & Testing
+Verify that all background endpoints are running correctly using the built-in health routes:
+- **Model Inference Engine Route**: http://localhost:8000/health
+- **API Node Gateway Route**: http://localhost:4000/health
+  
+To validate production readiness, check static types, and compile code packages, run:
 
 ```Bash
 npm run lint
 npm run typecheck
 npm run build
 npm run test
-``` 
+```
 
 ## Production Deployment Guide
-- **Frontend Client UI**: Deploy to Vercel with the root context set to ``apps/web``. Ensure ``NEXT_PUBLIC_API_URL`` points to your public Node.js Express server.
+- **Frontend Dashboard UI**: Host directly on Vercel with the root build parameter locked into ``emotion-recognition-app/apps/web``. Ensure ``NEXT_PUBLIC_API_URL`` routes to your remote API Gateway.
+- **Express API Gateway Backend**: Deploy onto Render, Railway, or Fly.io. Provide production environmental tags for ``DATABASE_URL``, ``REDIS_URL``, ``CORS_ORIGIN``, and ``MODEL_API_URL``.
+- **Model Inference API Service**: Deploy onto dedicated GPU instances or cloud target environments like Hugging Face Spaces. Extend cold start timeout parameters to account for model weights download and initialization.
 
-- **Backend API Gateway**: Deploy to platforms like Render, Railway, or Fly.io. Configure your environment variables for ``DATABASE_URL``, ``REDIS_URL``, ``CORS_ORIGIN``, and ``MODEL_API_URL``.
+## Project Contributors
+This monorepo was engineered as a final group deliverable for the **Statistical Learning course (CSC15004)** at VNU-HCM University of Science, Faculty of Information Technology:
+- **Võ Trần Duy Hoàng** - Student ID: ``23120266``
+- **Trương Sỹ Khánh** - Student ID: ``23120284``
+- **Lê Công Phúc** - Student ID: ``23120330``
 
-- **Model Inference API**: Host on an instance with GPU availability or specialized container spaces (e.g., Hugging Face Spaces). Set your cold-start timeouts to accommodate downloading the pre-trained weights during initialization.
-
-## Contributors & Team
-This monorepo was developed as part of a final project for the **Statistical Learning course (CSC15004)** at **VNU-HCM University of Science, Faculty of Information Technology**:  
-- **Võ Trần Duy Hoàng** - Student ID: ``23120266`` 
-- **Trương Sỹ Khánh** - Student ID: ``23120284``   
-- **Lê Công Phúc** - Student ID: ``23120330``  
-
-**Academic Instructors**: Ngô Minh Nhựt , Lê Long Quốc.
-**Submission Date**: May 30, 2026
+**Academic Supervisors**: Ngô Minh Nhựt, Lê Long Quốc.
+**Official Project Submission Date**: May 30, 2026.
