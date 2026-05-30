@@ -67,9 +67,9 @@ repository/
 ### 1. Deep Text Preprocessing Pipeline
 Every sentence from the raw data stream is routed through a 5-stage cleaning pipeline implemented inside ``model/src/text_cleaner.py``:
 - **Structural Noise Reduction**: Lowercases all incoming texts and applies regular expressions (Regex) to strip off text anomalies such as URL links, structural HTML tags, user ``@mentions``, and hashtags (``#``).
-- **Contextual Emoji Translation**: Uses the ``emoji_en.json`` asset map to identify and convert emoticons into equivalent plain English emotional keywords (e.g., 🥰 $\rightarrow$ *passionate/adorable*), preserving vital semantic details.
-- **Slang & Abbreviation Mapping**: Translates informal internet jargon (e.g., *im $\rightarrow$ i am, dont $\rightarrow$ do not, u $\rightarrow$ you*) via ``slang_en.json`` to restore sentences to standardized grammar before tokens hit the transformer layer.
-- **Repeated Character Contraction**: Truncates emotional character exaggerations (e.g., *loooove $\rightarrow$ love*, *happyyyyy $\rightarrow$ happy*) using string patterns to eliminate out-of-vocabulary anomalies.
+- **Contextual Emoji Translation**: Uses the ``emoji_en.json`` asset map to identify and convert emoticons into equivalent plain English emotional keywords (e.g., 🥰  → *passionate/adorable*), preserving vital semantic details.
+- **Slang & Abbreviation Mapping**: Translates informal internet jargon (e.g., *im  → i am, dont  → do not, u  → you*) via ``slang_en.json`` to restore sentences to standardized grammar before tokens hit the transformer layer.
+- **Repeated Character Contraction**: Truncates emotional character exaggerations (e.g., *loooove  → love*, *happyyyyy  → happy*) using string patterns to eliminate out-of-vocabulary anomalies.
 - **Byte-Pair Encoding (BPE) Tokenization**: Encodes clean strings using RoBERTa's native 50,265 token vocabulary. Special tokens (``<s>`` and ``</s>``) enclose the string, and a rigid boundaries constraint pads or truncates sequences to a uniform vector length of ``max_length = 128``.
 
 ### 2. Hyperparameter Sweeping with Optuna
