@@ -12,8 +12,8 @@ training:
   learning_rate: 2.128e-5
   weight_decay: 0.095          # Tăng nhẹ lên 0.095 để siết chặt chống Overfitting
   warmup_ratio: 0.1265
-  train_batch_size: 32
-  eval_batch_size: 32
+  train_batch_size: 16
+  eval_batch_size: 16
   num_epochs: 3
   early_stopping_patience: 1
   fp16: true
