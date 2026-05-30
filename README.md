@@ -208,10 +208,11 @@ npm run test
 - **Model Inference API Service**: Deploy onto dedicated GPU instances or cloud target environments like Hugging Face Spaces. Extend cold start timeout parameters to account for model weights download and initialization.
 
 ## Project Contributors
-This monorepo was engineered as a final group deliverable for the **Statistical Learning course (CSC15004)** at VNU-HCM University of Science, Faculty of Information Technology:
+This monorepo was engineered as a final group deliverable for the **Statistical Learning course (CSC15004)** at **VNU-HCM University of Science, Faculty of Information Technology**:
 - **Võ Trần Duy Hoàng** - Student ID: ``23120266``
 - **Trương Sỹ Khánh** - Student ID: ``23120284``
 - **Lê Công Phúc** - Student ID: ``23120330``
 
 **Academic Supervisors**: Ngô Minh Nhựt, Lê Long Quốc.
+
 **Official Project Submission Date**: May 30, 2026.
